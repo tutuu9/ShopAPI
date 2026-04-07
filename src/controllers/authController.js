@@ -1,5 +1,5 @@
 const User = require('../models/User');
-
+const jwt = require('jsonwebtoken');
 const register = async (req, res) => {
     try{
         const { name, lastname, email, password } = req.body;
@@ -53,5 +53,65 @@ const register = async (req, res) => {
             message: error.message,
         })
     }
-}
-module.exports = {register};
+};
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Please enter email'
+            });
+        }
+
+        if (!password) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Please enter password'
+            });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid email or password'
+            });
+        }
+
+        const isMatch = await user.comparePassword(password);
+
+        if (!isMatch) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid email or password'
+            });
+        }
+
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
+        user.password = undefined;
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'Successfully logged in',
+            token,
+            user
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            status: 'error',
+            message: error.message,
+        });
+    }
+};
+module.exports = {
+    register, login
+};
