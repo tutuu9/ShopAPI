@@ -53,5 +53,21 @@ const addProduct = async (req, res) => {
         });
     }
 };
+const getAllProducts = async (req, res) => {
+    try {
+        const products = await Product.find();
 
-module.exports = { addProduct };
+        return res.status(200).json({
+            status: 'success',
+            data: products
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error'
+        });
+    }
+};
+
+module.exports = { addProduct , getAllProducts };
