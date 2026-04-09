@@ -58,51 +58,86 @@ const getAllProducts = async (req, res) => {
         let page = parseInt(req.query.page) || 1;
         let limit = parseInt(req.query.limit) || 5;
         const search = req.query.search || "";
-        let sort = req.query.sort;
+        const category = req.query.category;
+        const minPrice = parseFloat(req.query.minPrice);
+        const maxPrice = parseFloat(req.query.maxPrice);
+        const sort = req.query.sort;
+
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 5;
+        if (limit > 20) limit = 20;
+
         let sortOption = { createdAt: -1 };
-        if (sort === "desc" || sort === "new") {
-            sortOption = { createdAt: -1 };
-        } else if (sort === "asc" || sort === "old") {
+
+        if (sort === "asc" || sort === "old") {
             sortOption = { createdAt: 1 };
+        } else if (sort === "desc" || sort === "new") {
+            sortOption = { createdAt: -1 };
         } else if (sort === "title") {
             sortOption = { title: 1 };
+        } else if (sort === "priceAsc") {
+            sortOption = { price: 1 };
+        } else if (sort === "priceDesc") {
+            sortOption = { price: -1 };
         }
+
         const filter = {
             $or: [
-                {title: { $regex: search, $options: "i" }},
-                {description: { $regex: search, $options: "i" }}
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } }
             ]
         };
-        if (page < 1) page = 1;
-        if (limit < 1) limit =  5;
-        if (limit > 20) limit = 20;
+
+        if (category) {
+            filter.category = category;
+        }
+
+        if (!isNaN(minPrice) || !isNaN(maxPrice)) {
+            filter.price = {};
+
+            if (!isNaN(minPrice)) {
+                filter.price.$gte = minPrice;
+            }
+
+            if (!isNaN(maxPrice)) {
+                filter.price.$lte = maxPrice;
+            }
+        }
+
         const total = await Product.countDocuments(filter);
-        const pages = Math.ceil(total / limit)
-        if (page > pages && pages !== 0) {
+        const pages = Math.ceil(total / limit) || 1;
+
+        if (page > pages) {
             page = pages;
         }
+
         const skip = (page - 1) * limit;
+
         const products = await Product.find(
             filter,
-            "_id title description price stock category image"
-        ).sort(sortOption).skip(skip).limit(limit);
+            "_id title description price stock category image createdAt"
+        )
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit);
 
-
-        res.status(200).json({
-            status: 'success',
-            search: search,
-            page: page,
-            limit: limit,
-            total: total,
-            pages: pages,
+        return res.status(200).json({
+            status: "success",
+            search,
+            category: category || null,
+            minPrice: !isNaN(minPrice) ? minPrice : null,
+            maxPrice: !isNaN(maxPrice) ? maxPrice : null,
+            page,
+            limit,
+            total,
+            pages,
             data: products
         });
-
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            status: 'error',
-            message: 'Server error'
+            status: "error",
+            message: "Server error"
         });
     }
 };
