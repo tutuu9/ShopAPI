@@ -91,4 +91,53 @@ const getProductById = async (req, res) => {
         })
     }
 };
-module.exports = { addProduct , getAllProducts , getProductById};
+const updateProduct = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { title, description, price, image, stock, category } = req.body;
+
+        const product = await Product.findById(id);
+
+        if (!product) {
+            return res.status(404).json({
+                status: "error",
+                message: "Product not found",
+            });
+        }
+
+        if (price !== undefined && price <= 0) {
+            return res.status(400).json({
+                status: "error",
+                message: "Price must be greater than 0",
+            });
+        }
+
+        if (stock !== undefined && stock < 0) {
+            return res.status(400).json({
+                status: "error",
+                message: "Stock cannot be negative",
+            });
+        }
+
+        product.title = title ?? product.title;
+        product.description = description ?? product.description;
+        product.price = price ?? product.price;
+        product.image = image ?? product.image;
+        product.stock = stock ?? product.stock;
+        product.category = category ?? product.category;
+
+        await product.save();
+
+        return res.status(200).json({
+            status: "success",
+            data: product,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: "error",
+            message: "Server error",
+        });
+    }
+};
+module.exports = { addProduct , getAllProducts , getProductById , updateProduct};
