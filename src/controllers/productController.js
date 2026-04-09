@@ -69,5 +69,26 @@ const getAllProducts = async (req, res) => {
         });
     }
 };
-
-module.exports = { addProduct , getAllProducts };
+const getProductById = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Product not found'
+            })
+        }
+        return res.status(200).json({
+            status: 'success',
+            data: product
+        })
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error'
+        })
+    }
+};
+module.exports = { addProduct , getAllProducts , getProductById};
