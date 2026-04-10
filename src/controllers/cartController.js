@@ -83,5 +83,30 @@ const addToCart = async (req, res) => {
         });
     }
 };
+const getCart = async (req,res) =>{
+    try{
+        const cart = await Cart.findOne({user: req.user.id})
+        if(!cart){
+            return res.status(200).json({
+                status: 'success',
+                message: 'Cart is empty',
+                data: null
+            });
+        }
+        
+        await cart.populate('items.product');
 
-module.exports = { addToCart };
+        return res.status(200).json({
+            status: 'success',
+            message: 'Cart',
+            data: cart
+        })
+    } catch (error){
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error'
+        });
+    }
+};
+module.exports = { addToCart , getCart };
