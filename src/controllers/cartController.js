@@ -93,7 +93,7 @@ const getCart = async (req,res) =>{
                 data: null
             });
         }
-        
+
         await cart.populate('items.product');
 
         return res.status(200).json({
@@ -109,4 +109,62 @@ const getCart = async (req,res) =>{
         });
     }
 };
-module.exports = { addToCart , getCart };
+const updateCartQuantity = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const { quantity } = req.body;
+
+        if (quantity === undefined) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Quantity is required'
+            });
+        }
+
+        if (quantity <= 0) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Quantity must be greater than 0'
+            });
+        }
+
+        const cart = await Cart.findOne({ user: req.user.id });
+
+        if (!cart) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Cart not found'
+            });
+        }
+
+        const item = cart.items.find(
+            (item) => item.product.toString() === productId
+        );
+
+        if (!item) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Product not found in cart'
+            });
+        }
+
+        item.quantity = quantity;
+
+        await cart.save();
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'Cart updated successfully',
+            data: cart
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error'
+        });
+    }
+};
+
+module.exports = { addToCart , getCart , updateCartQuantity };
