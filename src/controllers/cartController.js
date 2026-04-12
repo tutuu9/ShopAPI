@@ -215,4 +215,29 @@ const removeFromCart = async (req, res) => {
         });
     }
 };
-module.exports = { addToCart , getCart , updateCartQuantity };
+const clearCart = async (req, res) => {
+    try{
+        const cart = await Cart.findOne({ user: req.user.id });
+        if (!cart) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Cart not found'
+            });
+        };
+        cart.items = [];
+        await cart.save();
+        return res.status(200).json({
+            status: 'success',
+            message: 'Cart cleared successfully',
+            data: cart
+        });
+
+    } catch (error){
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error'
+        });
+    }
+};
+module.exports = { addToCart , getCart , updateCartQuantity , removeFromCart , clearCart};
