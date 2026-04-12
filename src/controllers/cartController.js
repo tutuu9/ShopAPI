@@ -166,5 +166,53 @@ const updateCartQuantity = async (req, res) => {
         });
     }
 };
+const removeFromCart = async (req, res) => {
+    try {
+        const { productId } = req.params;
 
+        if (!productId) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Product id is required'
+            });
+        }
+
+        const cart = await Cart.findOne({ user: req.user.id });
+
+        if (!cart) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Cart not found'
+            });
+        }
+
+        const initialLength = cart.items.length;
+
+        cart.items = cart.items.filter(
+            (item) => item.product.toString() !== productId
+        );
+
+        if (cart.items.length === initialLength) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Product not found in cart'
+            });
+        }
+
+        await cart.save();
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'Product removed from cart',
+            data: cart
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error'
+        });
+    }
+};
 module.exports = { addToCart , getCart , updateCartQuantity };
