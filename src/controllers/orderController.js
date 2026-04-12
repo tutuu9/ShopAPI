@@ -120,5 +120,42 @@ const getAllOrders = async (req, res) => {
         });
     }
 };
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
 
-module.exports = { createOrder, getMyOrders , getAllOrders };
+        const validStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
+
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid status'
+            });
+        }
+
+        const order = await Order.findById(id);
+
+        if (!order) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Order not found',
+            });
+        }
+
+        order.status = status;
+        await order.save();
+
+        return res.status(200).json({
+            status: 'success',
+            data: order,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error',
+        });
+    }
+};
+module.exports = { createOrder, getMyOrders , getAllOrders , updateOrderStatus};
