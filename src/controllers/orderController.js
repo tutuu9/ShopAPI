@@ -101,5 +101,24 @@ const getMyOrders = async (req, res) => {
         });
     }
 };
+const getAllOrders = async (req, res) => {
+    try {
+        const orders = await Order.find()
+            .populate('user', 'name email')
+            .populate('items.product', 'title price')
+            .sort({ createdAt: -1 });
 
-module.exports = { createOrder, getMyOrders };
+        return res.status(200).json({
+            status: 'success',
+            data: orders,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error',
+        });
+    }
+};
+
+module.exports = { createOrder, getMyOrders , getAllOrders };
